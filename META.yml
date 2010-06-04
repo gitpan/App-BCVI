@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                App-BCVI
-version:             3.00
+version:             3.01
 abstract:            Back-channel vi, a shell utility to proxy commands back over ssh
 license:             ~
 author:              
