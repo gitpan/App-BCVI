@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               App-BCVI
-version:            3.03
+version:            3.04
 abstract:           Back-channel vi, a shell utility to proxy commands back over ssh
 author:
     - Grant McLean <grantm@cpan.org>
@@ -17,7 +17,7 @@ no_index:
     directory:
         - t
         - inc
-generated_by:       ExtUtils::MakeMaker version 6.55_02
+generated_by:       ExtUtils::MakeMaker version 6.5502
 meta-spec:
     url:      http://module-build.sourceforge.net/META-spec-v1.4.html
     version:  1.4
