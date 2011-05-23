@@ -25,8 +25,9 @@ require 5.008;
 ##############################################################################
 
 package App::BCVI;
-
-our $VERSION   = '3.04';
+BEGIN {
+  $App::BCVI::VERSION = '3.05';
+}
 
 use File::Spec;
 use File::Path;
@@ -248,6 +249,7 @@ END_POD
     );
 
 
+    $class->add_home_bin();
     $class->register_aliases(
         'test -n "$(which bcvi)" && eval "$(bcvi --unpack-term)"',
         'test -n "${BCVI_CONF}"  && alias vi="bcvi"',
@@ -330,6 +332,15 @@ sub command_handler {
     return "execute_commands_pod" if $name eq 'commands_pod';
     my $spec = $commands{$name} or return;
     return $spec->{dispatch_to};
+}
+
+
+sub add_home_bin {
+    my $class = shift;
+    my $home_bin = $class->home_directory . '/bin';
+    $class->register_aliases(
+        qq{echo \$PATH | grep -q $home_bin || PATH="$home_bin/\$PATH"},
+    );
 }
 
 
@@ -614,6 +625,9 @@ sub plugin_help {
 ##############################################################################
 
 package App::BCVI::Client;
+BEGIN {
+  $App::BCVI::Client::VERSION = '3.05';
+}
 
 BEGIN { @App::BCVI::Client::ISA = qw( App::BCVI ); }
 
@@ -1013,6 +1027,9 @@ sub preferred_rc_file {
 ##############################################################################
 
 package App::BCVI::Server;
+BEGIN {
+  $App::BCVI::Server::VERSION = '3.05';
+}
 
 BEGIN { @App::BCVI::Server::ISA = qw( App::BCVI ); }
 
@@ -1266,6 +1283,9 @@ sub execute_scpd {
 ##############################################################################
 
 package App::BCVI::POD;
+BEGIN {
+  $App::BCVI::POD::VERSION = '3.05';
+}
 
 use Pod::Text;
 

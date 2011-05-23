@@ -1,10 +1,13 @@
-bin/bcvi
 Changes
+LICENSE
+MANIFEST
+META.json
+META.yml
+Makefile.PL
+README
+bin/bcvi
+dist.ini
 lib/App/BCVI.pod
 lib/App/BCVI/Plugins.pod
-Makefile.PL
-MANIFEST
-README
 t/00_syntax.t
-t/pod.t
-META.yml                                 Module meta-data (added by MakeMaker)
+t/release-pod-syntax.t

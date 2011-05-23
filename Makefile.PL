@@ -1,19 +1,53 @@
+
 use strict;
 use warnings;
 
-use ExtUtils::MakeMaker;
+BEGIN { require 5.008; }
 
-WriteMakefile(
-    NAME                => 'App::BCVI',
-    AUTHOR              => 'Grant McLean <grantm@cpan.org>',
-    VERSION_FROM        => 'bin/bcvi',
-    ABSTRACT_FROM       => 'lib/App/BCVI.pod',
-    MIN_PERL_VERSION    => 5.008,
-    PL_FILES            => {},
-    PREREQ_PM => {
-        'Test::More' => 0,
-    },
-    EXE_FILES           => [ qw(bin/bcvi) ],
-    dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
-    clean               => { FILES => 'App-BCVI-*' },
+use ExtUtils::MakeMaker 6.31;
+
+
+
+my %WriteMakefileArgs = (
+  'ABSTRACT' => 'Back-channel vi, a shell utility to proxy commands back over ssh',
+  'AUTHOR' => 'Grant McLean <grantm@cpan.org>',
+  'BUILD_REQUIRES' => {
+    'Test::More' => '0.88'
+  },
+  'CONFIGURE_REQUIRES' => {
+    'ExtUtils::MakeMaker' => '6.31'
+  },
+  'DISTNAME' => 'App-BCVI',
+  'EXE_FILES' => [
+    'bin/bcvi'
+  ],
+  'LICENSE' => 'perl',
+  'NAME' => 'App::BCVI',
+  'PREREQ_PM' => {},
+  'VERSION' => '3.05',
+  'test' => {
+    'TESTS' => 't/*.t'
+  }
 );
+
+
+unless ( eval { ExtUtils::MakeMaker->VERSION(6.56) } ) {
+  my $br = delete $WriteMakefileArgs{BUILD_REQUIRES};
+  my $pp = $WriteMakefileArgs{PREREQ_PM};
+  for my $mod ( keys %$br ) {
+    if ( exists $pp->{$mod} ) {
+      $pp->{$mod} = $br->{$mod} if $br->{$mod} > $pp->{$mod};
+    }
+    else {
+      $pp->{$mod} = $br->{$mod};
+    }
+  }
+}
+
+delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
+  unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
+
+WriteMakefile(%WriteMakefileArgs);
+
+
+
