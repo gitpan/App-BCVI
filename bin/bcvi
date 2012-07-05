@@ -9,7 +9,7 @@
 #
 # Use 'bcvi --help' for the documentation
 #
-# Copyright (c) 2007-2010 Grant McLean <grantm@cpan.org>
+# Copyright (c) 2007-2012 Grant McLean <grantm@cpan.org>
 #
 
 use strict;
@@ -25,9 +25,8 @@ require 5.008;
 ##############################################################################
 
 package App::BCVI;
-BEGIN {
-  $App::BCVI::VERSION = '3.05';
-}
+
+our $VERSION   = '3.06';
 
 use File::Spec;
 use File::Path;
@@ -90,6 +89,15 @@ sub base_init {
         summary     => 'detailed help message',
         description => <<'END_POD'
 Display this documentation.
+END_POD
+    );
+
+    $class->register_option(
+        name        => 'debug',
+        alias       => 'd',
+        summary     => 'turn on debugging',
+        description => <<'END_POD'
+Turn on debugging messages.
 END_POD
     );
 
@@ -339,7 +347,7 @@ sub add_home_bin {
     my $class = shift;
     my $home_bin = $class->home_directory . '/bin';
     $class->register_aliases(
-        qq{echo \$PATH | grep -q $home_bin || PATH="$home_bin/\$PATH"},
+        qq{echo \$PATH | grep -q $home_bin || PATH="$home_bin:\$PATH"},
     );
 }
 
@@ -474,10 +482,19 @@ sub new {
 }
 
 
+sub DEBUG {
+    my $self = shift;
+
+    return unless $self->opt('debug');
+    warn "$_\n" foreach @_;
+}
+
+
 sub dispatch {
     my($self, @args) = @_;
 
     if(my $method = $self->dispatch_option) {
+        $self->DEBUG("Dispatching to: $method");
         $self->$method(@args);
         exit;
     }
@@ -625,9 +642,6 @@ sub plugin_help {
 ##############################################################################
 
 package App::BCVI::Client;
-BEGIN {
-  $App::BCVI::Client::VERSION = '3.05';
-}
 
 BEGIN { @App::BCVI::Client::ISA = qw( App::BCVI ); }
 
@@ -663,11 +677,13 @@ sub send_command {
 
     my $sock = $self->connect_to_listener();
 
-    $sock->write(
+    my $request =
         "Auth-Key: "   . $self->auth_key   . $LF .
         "Host-Alias: " . $self->host_alias . $LF .
-        "Command: "    . $command          . $LF
-    ) or die "Error sending command through backchannel: $!";
+        "Command: "    . $command          . $LF;
+    $self->DEBUG($request);
+    $sock->write($request)
+        or die "Error sending command through backchannel: $!";
 
     $self->send_body(\@files);
     return if $self->check_response() =~ /^(?:200|300)$/;
@@ -697,6 +713,8 @@ sub check_response {
     my($self) = @_;
 
     my $response = $self->sock->getline() or die "Server hung up\n";
+    chomp($response);
+    $self->DEBUG("Received response: $response");
     if(my($code, $message) = $response =~ m{^(\d\d\d) (.*)$}) {
         ($self->{response_code}, $self->{response_message}) = ($code, $message);
         $self->read_response() if $code eq '300';
@@ -737,6 +755,7 @@ sub connect_to_listener {
     my($self) = @_;
 
     $self->get_connection_details();
+    $self->DEBUG("Connecting to: " . $self->gateway_address . ':' . $self->port);
 
     my $peer = $self->gateway_address . ':' . $self->port;
     my $sock = IO::Socket::INET->new(
@@ -745,6 +764,8 @@ sub connect_to_listener {
 
     binmode($sock);
     my $welcome = $sock->getline() or die "No listener?\n";
+    chomp($welcome);
+    $self->DEBUG("Server banner: $welcome");
     if($welcome =~ /^100 Ready \(([^)]+)\)/) {
         $self->{server_version} = $1;
     }
@@ -1027,9 +1048,6 @@ sub preferred_rc_file {
 ##############################################################################
 
 package App::BCVI::Server;
-BEGIN {
-  $App::BCVI::Server::VERSION = '3.05';
-}
 
 BEGIN { @App::BCVI::Server::ISA = qw( App::BCVI ); }
 
@@ -1102,11 +1120,13 @@ sub generate_auth_key {
 
     if($self->opt('reuse-auth')) {
         $self->{auth_key} = $self->get_listener_auth_key();
+        $self->DEBUG("Reusing auth key: $self->{auth_key}");
         return;
     }
 
     my $data = "$self" . $$ . time() . rand();
     $self->{auth_key} = md5_hex($data);
+    $self->DEBUG("Generated new auth key: $self->{auth_key}");
 
     my $auth_file = $self->auth_key_filename();
     open my $fh, '>', $auth_file or die "open(>$auth_file): $!";
@@ -1120,6 +1140,7 @@ sub create_listener_socket {
     my $port = $self->opt('port') || $self->default_port();
     $self->save_port($port);
     my $local_addr = $self->listen_address . ':' .  $port;
+    $self->DEBUG("Starting listener on: $local_addr");
     $self->{sock} = IO::Socket::INET->new(
         LocalAddr => $local_addr,
         ReuseAddr => 1,
@@ -1139,6 +1160,7 @@ sub accept_loop {
     while(1) {
         my $new = $sock->accept();
         next if $!{EINTR};
+        $self->DEBUG("Accepted connection");
         if(fork()) {  # In parent
             close $new;
         }
@@ -1157,10 +1179,13 @@ sub dispatch_request {
 
     $self->send_response(100);
     my $req = $self->collect_headers();
+    $self->DEBUG("Calling host: " . $self->calling_host());
     $self->validate_auth_key($req->{auth_key})
         or $self->exit_response(900);
+    $self->DEBUG("Received command: $req->{command}");
     my $method = $self->command_handler($req->{command})
         or $self->exit_response(910);
+    $self->DEBUG("Dispatching to: $method");
     $self->$method();
     $self->send_response(200);
 }
@@ -1171,7 +1196,7 @@ sub validate_auth_key {
 
     return 1 if $key && $key eq $self->auth_key;
     my $alias = $self->calling_host();
-    warn "Invalid Auth-Key in request from $alias\n" if -t 2;
+    $self->DEBUG("Invalid Auth-Key in request from $alias");
     return;
 }
 
@@ -1181,6 +1206,7 @@ sub send_response {
 
     my $message = $self->message_from_code($code) || 'Invalid response code';
     $message = Encode::encode('utf8', $message);
+    $self->DEBUG("Sending response: $code $message");
     $self->sock->write(qq{$code $message\x0A});
 }
 
@@ -1228,7 +1254,9 @@ sub read_request_body {
 sub get_filenames {
     my($self) = @_;
 
-    return split /\x0a/, Encode::decode('utf8', $self->read_request_body());
+    my @files = split /\x0a/, Encode::decode('utf8', $self->read_request_body());
+    $self->DEBUG("Filename: $_") foreach @files;
+    return @files;
 }
 
 
@@ -1283,9 +1311,6 @@ sub execute_scpd {
 ##############################################################################
 
 package App::BCVI::POD;
-BEGIN {
-  $App::BCVI::POD::VERSION = '3.05';
-}
 
 use Pod::Text;
 
@@ -1553,7 +1578,7 @@ The installation to a remote server should set up aliases, e.g.:
 
 =head1 COPYRIGHT
 
-Copyright 2007-2010 Grant McLean E<lt>grantm@cpan.orgE<gt>
+Copyright 2007-2012 Grant McLean E<lt>grantm@cpan.orgE<gt>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -17,4 +17,4 @@ requires:
   perl: 5.008
 resources:
   repository: git://github.com/grantm/bcvi.git
-version: 3.05
+version: 3.06

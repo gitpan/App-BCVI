@@ -1,5 +1,9 @@
 Revision history for App-BCVI
 
+3.06      2012-07-06 06:50:38 Pacific/Auckland
+        - added a --debug option
+        - fix dumb typo in $PATH setting
+
 3.05      2011-05-23 22:44:09 Pacific/Auckland
         - add $HOME/bin to $PATH if not there already
         - switch packaging to use Dist::Zilla

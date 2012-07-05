@@ -10,4 +10,5 @@ dist.ini
 lib/App/BCVI.pod
 lib/App/BCVI/Plugins.pod
 t/00_syntax.t
+t/01_version.t
 t/release-pod-syntax.t
