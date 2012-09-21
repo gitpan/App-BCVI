@@ -26,7 +26,7 @@ require 5.008;
 
 package App::BCVI;
 
-our $VERSION   = '3.06';
+our $VERSION   = '3.07';
 
 use File::Spec;
 use File::Path;
@@ -780,7 +780,7 @@ sub show_versions {
 
     if($ENV{BCVI_CONF}) {
         $self->connect_to_listener();
-        print "bcvi server: $App::BCVI::VERSION\n";
+        print "bcvi server: " . $self->server_version . "\n";
     }
 }
 
@@ -1179,7 +1179,7 @@ sub dispatch_request {
 
     $self->send_response(100);
     my $req = $self->collect_headers();
-    $self->DEBUG("Calling host: " . $self->calling_host());
+    $self->DEBUG("Calling host: " . $self->calling_host) if $self->calling_host;
     $self->validate_auth_key($req->{auth_key})
         or $self->exit_response(900);
     $self->DEBUG("Received command: $req->{command}");
@@ -1196,7 +1196,7 @@ sub validate_auth_key {
 
     return 1 if $key && $key eq $self->auth_key;
     my $alias = $self->calling_host();
-    $self->DEBUG("Invalid Auth-Key in request from $alias");
+    $self->DEBUG("Invalid Auth-Key in request from $alias") if $key;
     return;
 }
 

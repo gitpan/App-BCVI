@@ -2,31 +2,31 @@
 use strict;
 use warnings;
 
-BEGIN { require 5.008; }
+use 5.008;
 
-use ExtUtils::MakeMaker 6.31;
+use ExtUtils::MakeMaker 6.30;
 
 
 
 my %WriteMakefileArgs = (
-  'ABSTRACT' => 'Back-channel vi, a shell utility to proxy commands back over ssh',
-  'AUTHOR' => 'Grant McLean <grantm@cpan.org>',
-  'BUILD_REQUIRES' => {
-    'Test::More' => '0.88'
+  "ABSTRACT" => "Back-channel vi, a shell utility to proxy commands back over ssh",
+  "AUTHOR" => "Grant McLean <grantm\@cpan.org>",
+  "BUILD_REQUIRES" => {
+    "Test::More" => "0.88"
   },
-  'CONFIGURE_REQUIRES' => {
-    'ExtUtils::MakeMaker' => '6.31'
+  "CONFIGURE_REQUIRES" => {
+    "ExtUtils::MakeMaker" => "6.30"
   },
-  'DISTNAME' => 'App-BCVI',
-  'EXE_FILES' => [
-    'bin/bcvi'
+  "DISTNAME" => "App-BCVI",
+  "EXE_FILES" => [
+    "bin/bcvi"
   ],
-  'LICENSE' => 'perl',
-  'NAME' => 'App::BCVI',
-  'PREREQ_PM' => {},
-  'VERSION' => '3.06',
-  'test' => {
-    'TESTS' => 't/*.t'
+  "LICENSE" => "perl",
+  "NAME" => "App::BCVI",
+  "PREREQ_PM" => {},
+  "VERSION" => "3.07",
+  "test" => {
+    "TESTS" => "t/*.t"
   }
 );
 
