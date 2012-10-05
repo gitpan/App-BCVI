@@ -1,6 +1,6 @@
 package App::BCVI;
 {
-  $App::BCVI::VERSION = '3.07';
+  $App::BCVI::VERSION = '3.08';
 }
 
 # This file is documentation only - all code is in bin/bcvi.  Package name is
